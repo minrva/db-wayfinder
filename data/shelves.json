@@ -1,0 +1,22 @@
+[
+    {
+        "id": "24b9855e-20a8-404b-b62c-6ba5e851f3c3",
+        "label": "1",
+        "lowerBound": "E885 .N5",
+        "upperBound": "F541 .M9",
+        "mapTitle": "Undergrad",
+        "mapUri": "1_undergrad.png",
+        "x": 459,
+        "y": 207
+    },
+    {
+        "id": "6f970576-3994-4d25-8d76-346ac67840ae",
+        "label": "2",
+        "lowerBound": "E885 .N5",
+        "upperBound": "F541 .M9",
+        "mapTitle": "Undergrad",
+        "mapUri": "1_undergrad.png",
+        "x": 100,
+        "y": 100
+    }
+]

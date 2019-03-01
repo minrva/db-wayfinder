@@ -9,8 +9,8 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 Ingesting mod-wayfinder sample data involves:
 
-1. Running and enabling `mod-wayfinder` through Okapi, in order to trigger the creation of the `diku_mod_wayfinder` schema and `shelves` tables.
-1. Running `init_mod_wayfinder.py` which will automatically add uuidv4 ids to the json objects and then insert them into the `jsonb` column of their corresponding postgres datatables.
+1. Running and enabling `mod-wayfinder` through Okapi, in order to trigger the creation of the `diku_mod_wayfinder` schema and `shelves` table.
+1. Running `init_mod_wayfinder.py` which will automatically add uuidv4 ids to the json objects and then insert them into the `jsonb` column of their corresponding postgres datatable.
 
     ```bash
     source activate folio

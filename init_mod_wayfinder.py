@@ -1,14 +1,12 @@
 # pylint: disable=invalid-name
 """Digests mod-wayfinder json data."""
-import json
-import os
-import uuid
-import dataset
+import csv, json, os, uuid, dataset
 
 
 # directory
 DATA_DIR = 'data'
-SHELVES_FILE = 'shelves.json'
+SHELVES_CSV_FILE = 'shelves.csv'
+SHELVES_JSON_FILE = 'shelves.json'
 
 # postgres
 PG_USER = 'folio_admin'
@@ -22,6 +20,17 @@ PG_URL = ("postgresql://" + PG_USER + ":" + PG_PASSWORD +
 #  wayfinder schema
 WF_SCHEMA = 'diku_mod_wayfinder'
 WF_SHELVES_TBL = 'shelves'
+
+
+def load_csv(fpath):
+    """Loads a CSV file."""
+    d = []
+    with open(fpath, encoding='utf-8-sig') as fs:
+        csvReader = csv.DictReader(fs)
+        for csvRow in csvReader:
+            d.append(csvRow)
+    print("Loaded {0} objects from {1}...".format(len(d), fpath))
+    return d
 
 
 def load_json(fpath):
@@ -44,6 +53,14 @@ def load_table(tbl_name, schema_name):
     db.executable.close()
     db = None
     return rows
+
+
+def csv_to_json(cpath, jpath):
+    """Transforms CSV file to JSON file."""
+    print("Transforming {0} to {1}...".format(cpath, jpath))
+    shelves_csv = load_csv(cpath)
+    with open(jpath, "w") as json_file:
+        json_file.write(json.dumps(shelves_csv, indent = 4))
 
 
 def create_table(rows, tbl_name, schema_name, clear=True):
@@ -72,19 +89,25 @@ def create_shelf_row(data):
     new_obj['y'] = data['y']
     return dict(jsonb=new_obj)
 
+
 if __name__ == '__main__':
 
+    # transformed csv to json
+    # csv_path = os.path.join(DATA_DIR, SHELVES_CSV_FILE)
+    # json_path = os.path.join(DATA_DIR, SHELVES_JSON_FILE)
+    # csv_to_json(csv_path, json_path)
+    
     # load shelves
-    print('Loading data...')
-    shelves_path = os.path.join(DATA_DIR, SHELVES_FILE)
+    print('Loading data...')    
+    shelves_path = os.path.join(DATA_DIR, SHELVES_JSON_FILE)
     shelves_json = load_json(shelves_path)
 
     # transform data to database rows
     print('Transforming data to database rows...')
     shelf_rows = []
     for shelf_json in shelves_json:
-        shelf_row = create_shelf_row(shelf_json)
-        shelf_rows.append(shelf_row)
+         shelf_row = create_shelf_row(shelf_json)
+         shelf_rows.append(shelf_row)
 
     # create database tables
     print('Creating database tables...')

@@ -5,8 +5,6 @@ import csv, json, os, uuid, dataset
 
 # directory
 DATA_DIR = 'data'
-SHELVES_CSV_FILE = 'shelves.csv'
-SHELVES_JSON_FILE = 'shelves.json'
 
 # postgres
 PG_USER = 'folio_admin'
@@ -17,9 +15,29 @@ PG_DBNAME = 'okapi_modules'
 PG_URL = ("postgresql://" + PG_USER + ":" + PG_PASSWORD +
           '@' + PG_NETLOC + ':' + PG_PORT + '/' + PG_DBNAME)
 
-#  wayfinder schema
+#  wayfinder
 WF_SCHEMA = 'diku_mod_wayfinder'
 WF_SHELVES_TBL = 'shelves'
+SHELVES_CSV_FILE = 'shelves.csv'
+SHELVES_JSON_FILE = 'shelves.json'
+
+# holdings record
+HOLDINGS_SCHEMA = 'diku_mod_inventory_storage'
+HOLDINGS_TBL = 'holdings_record'
+INSTANCE_IDS = [
+    'b5b13415-145b-4e61-aaa8-aecf6a4a0571',
+    'ef3641e5-ead0-4409-a485-4ab0059646c5',
+    '0e3f5a3d-79c5-4252-96ea-6c0c0dbe4e7e',
+    'de1c4934-f4dc-4ab1-8548-16915e682dd2',
+    'b21d2059-dc52-4afa-b12c-6870f0680389'
+]
+CALL_NOS = [
+    'CT502 .E542 1998',
+    'F215 .W85 1951',
+    'E302.6.F8 V362 1945',
+    'UA23.15 .F45 2002',
+    'D102 .M38 2002'
+]
 
 
 def load_csv(fpath):
@@ -60,10 +78,10 @@ def csv_to_json(cpath, jpath):
     print("Transforming {0} to {1}...".format(cpath, jpath))
     shelves_csv = load_csv(cpath)
     with open(jpath, "w") as json_file:
-        json_file.write(json.dumps(shelves_csv, indent = 4))
+        json_file.write(json.dumps(shelves_csv, indent=4))
 
 
-def create_table(rows, tbl_name, schema_name, clear=True):
+def populate_table(rows, tbl_name, schema_name, clear=True):
     """Creates a postgres table."""
     print("Saving {0} rows to {1}.{2}...".format(
         len(rows), schema_name, tbl_name))
@@ -90,27 +108,50 @@ def create_shelf_row(data):
     return dict(jsonb=new_obj)
 
 
+def create_shelf_rows(shelves):
+    """Creates shelf rows from json array."""
+    print('Transforming data to database rows...')
+    rows = []
+    for shelf in shelves:
+        row = create_shelf_row(shelf)
+        rows.append(row)
+    return rows
+
+
+def update_holdings_record(row_id, call_no, tbl_name, schema_name):
+    """Updates a holding record call number by instance id."""
+    print("Updating call no. to {0} for row {1} in {2}.{3}...".format(
+        call_no, row_id, schema_name, tbl_name))
+    with dataset.Database(url=PG_URL, schema=schema_name) as db:
+        tbl = db[tbl_name]
+        row = tbl.find_one(instanceid=row_id)
+        if row is not None:
+            row['jsonb']['callNumber'] = call_no
+            tbl.upsert(row, ['_id'])
+    db.executable.close()
+    db = None
+
+
+def update_holdings_records(instance_ids, call_nos, tbl_name, schema_name):
+    """Updates a batch of holding record call numbers by instance ids."""
+    for instance_id, call_no in zip(instance_ids, call_nos):
+        update_holdings_record(instance_id, call_no, tbl_name, schema_name)
+
+
 if __name__ == '__main__':
 
     # transformed csv to json
     # csv_path = os.path.join(DATA_DIR, SHELVES_CSV_FILE)
     # json_path = os.path.join(DATA_DIR, SHELVES_JSON_FILE)
     # csv_to_json(csv_path, json_path)
-    
-    # load shelves
-    print('Loading data...')    
+
+    # update existing FOLIO holding records with call numbers
+    update_holdings_records(INSTANCE_IDS, CALL_NOS, HOLDINGS_TBL, HOLDINGS_SCHEMA)
+
+    # load sample shelves into diku_mod_wayfinder.shelves
     shelves_path = os.path.join(DATA_DIR, SHELVES_JSON_FILE)
     shelves_json = load_json(shelves_path)
-
-    # transform data to database rows
-    print('Transforming data to database rows...')
-    shelf_rows = []
-    for shelf_json in shelves_json:
-         shelf_row = create_shelf_row(shelf_json)
-         shelf_rows.append(shelf_row)
-
-    # create database tables
-    print('Creating database tables...')
-    create_table(shelf_rows, WF_SHELVES_TBL, WF_SCHEMA)
+    shelf_rows = create_shelf_rows(shelves_json)
+    populate_table(shelf_rows, WF_SHELVES_TBL, WF_SCHEMA)
 
     print('Complete...')

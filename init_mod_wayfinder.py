@@ -24,6 +24,7 @@ SHELVES_JSON_FILE = 'shelves.json'
 # holdings record
 HOLDINGS_SCHEMA = 'diku_mod_inventory_storage'
 HOLDINGS_TBL = 'holdings_record'
+MAIN_LOCATION_ID = 'fcd64ce1-6995-48f0-840e-89ffa2288371'
 INSTANCE_IDS = [
     'b5b13415-145b-4e61-aaa8-aecf6a4a0571',
     'ef3641e5-ead0-4409-a485-4ab0059646c5',
@@ -98,6 +99,7 @@ def create_shelf_row(data):
     """Creates a shelf row."""
     new_obj = {}
     new_obj['id'] = str(uuid.uuid4())
+    new_obj['permanentLocationId'] = MAIN_LOCATION_ID
     new_obj['label'] = data['label']
     new_obj['lowerBound'] = data['lowerBound']
     new_obj['upperBound'] = data['upperBound']
@@ -146,7 +148,8 @@ if __name__ == '__main__':
     # csv_to_json(csv_path, json_path)
 
     # update existing FOLIO holding records with call numbers
-    update_holdings_records(INSTANCE_IDS, CALL_NOS, HOLDINGS_TBL, HOLDINGS_SCHEMA)
+    update_holdings_records(INSTANCE_IDS, CALL_NOS,
+                            HOLDINGS_TBL, HOLDINGS_SCHEMA)
 
     # load sample shelves into diku_mod_wayfinder.shelves
     shelves_path = os.path.join(DATA_DIR, SHELVES_JSON_FILE)
